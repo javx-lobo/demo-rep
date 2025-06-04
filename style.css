@@ -1,0 +1,6 @@
+body { font-family: Arial, sans-serif; background: #222; color: #eee; text-align: center; }
+#app { max-width: 800px; margin: auto; padding: 1rem; }
+.log { white-space: pre-wrap; text-align: left; background: #333; padding: 1rem; height: 60vh; overflow-y: auto; margin-bottom: 1rem; }
+button { padding: 0.5rem 1rem; font-size: 1rem; }
+.card { font-size: 1.2rem; margin: 0.2rem; display: inline-block; }
+.tile { margin: 0.2rem; display: inline-block; }
