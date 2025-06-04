@@ -1,8 +1,26 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<time.h>
-#include<string.h>
-#include<windows.h>
+#define _POSIX_C_SOURCE 199309L
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+#include <unistd.h>
+
+/* simple cross platform sleep replacement used by the original
+ * Windows version.  The code sprinkled many calls to `Sleep` with
+ * floating point seconds (e.g. `Sleep(2.5)`).  We implement our own
+ * function and macro so the rest of the code can remain untouched. */
+static void msleep(double seconds)
+{
+    if (seconds <= 0)
+        return;
+
+    struct timespec ts;
+    ts.tv_sec = (time_t)seconds;
+    ts.tv_nsec = (long)((seconds - ts.tv_sec) * 1e9);
+    nanosleep(&ts, NULL);
+}
+
+#define Sleep(x) msleep(x)
 
 
 //QUICK SORTING METHOD
@@ -298,7 +316,9 @@ int unsigned windsCheck(player mplaya){
 
 //fspCheck function
 int fspCheck(player fplaya){
-    int ok,m,wnum,nnum,dnum,snum,fnum; int dlen=5;
+    int m;
+    int wnum = 0, nnum = 0, dnum = 0, snum = 0, fnum = 0;
+    int dlen = 5;
     // Conditions:
         //2 or 3 same number tiles, dragons count
         //2 or 3 seasons XOR 2 or 3 flowers
@@ -321,7 +341,7 @@ int fspCheck(player fplaya){
         }
 
         //Check number of normal tiles
-          for(m=0;m>5;m++){
+          for(m=0;m<5;m++){
                     if(fplaya.mahjong[m].kind.id==0){
                         nnum += 1;
                     }
