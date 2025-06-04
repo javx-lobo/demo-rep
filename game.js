@@ -1,9 +1,51 @@
 const logEl = document.getElementById('log');
 const startBtn = document.getElementById('startBtn');
+const promptEl = document.getElementById('prompt');
+const promptText = document.getElementById('promptText');
+const promptInput = document.getElementById('promptInput');
+const promptOk = document.getElementById('promptOk');
+const promptYes = document.getElementById('promptYes');
+const promptNo = document.getElementById('promptNo');
 
 function log(msg) {
-  logEl.textContent += msg + '\n';
+  logEl.innerHTML += msg + '<br>';
   logEl.scrollTop = logEl.scrollHeight;
+}
+
+function promptInput(message, def=''){
+  promptText.textContent = message;
+  promptInput.value = def;
+  promptInput.classList.remove('hidden');
+  promptOk.classList.remove('hidden');
+  promptYes.classList.add('hidden');
+  promptNo.classList.add('hidden');
+  promptEl.classList.remove('hidden');
+  return new Promise(res=>{
+    promptOk.onclick = ()=>{ promptEl.classList.add('hidden'); res(promptInput.value); };
+  });
+}
+
+function promptYesNo(message){
+  promptText.textContent = message;
+  promptInput.classList.add('hidden');
+  promptOk.classList.add('hidden');
+  promptYes.classList.remove('hidden');
+  promptNo.classList.remove('hidden');
+  promptEl.classList.remove('hidden');
+  return new Promise(res=>{
+    promptYes.onclick = ()=>{ promptEl.classList.add('hidden'); res(true); };
+    promptNo.onclick = ()=>{ promptEl.classList.add('hidden'); res(false); };
+  });
+}
+
+function promptMessage(message){
+  promptText.textContent = message;
+  promptInput.classList.add('hidden');
+  promptOk.classList.remove('hidden');
+  promptYes.classList.add('hidden');
+  promptNo.classList.add('hidden');
+  promptEl.classList.remove('hidden');
+  return new Promise(res=>{ promptOk.onclick = ()=>{ promptEl.classList.add('hidden'); res(); }; });
 }
 
 // Data for cards and tiles
@@ -107,15 +149,16 @@ function fspCheck(tiles){
   if(fnum===0 || snum===0) return 1; else return 0;
 }
 
-function jellyBean(player){
+async function jellyBean(player){
   const bean = Math.floor(Math.random()*3);
-  let guess = parseInt(prompt(`Player ${player+1}, choose a hand (0=Left,1=Center,2=Right)`));
+  let guess = parseInt(await promptInput(`Player ${player+1}, choose a hand (0=Left,1=Center,2=Right)`));
   if(guess===bean){ log('Bingo!'); return true;} else { log('Oh no! Nothing there!'); return false; }
 }
 
-function startGame(){
-  logEl.textContent='';
-  let gold = parseInt(prompt('Select initial player gold:', '100')) || 100;
+async function startGame(){
+  logEl.innerHTML='';
+  startBtn.disabled = true;
+  let gold = parseInt(await promptInput('Select initial player gold:', '100')) || 100;
   const players = [
     {gold, dominance:18, position:0, rwin:0},
     {gold, dominance:36, position:1, rwin:0}
@@ -131,7 +174,10 @@ function startGame(){
 
     for(let i=0;i<2;i++){
       log(`Player ${i+1} cards:`);
-      cards[i].forEach(c=>log(` ${c.number}${c.suit}`));
+      cards[i].forEach(c=>{
+        const cls = (c.suit==='\u2660' || c.suit==='\u2663') ? 'card' : 'card red';
+        log(`<span class="${cls}">${c.number}${c.suit}</span>`);
+      });
       const score=handScores[i];
       players[i].handscore=score;
       if(score>=900) log(`Player ${i+1} has a Prez Flush`);
@@ -148,7 +194,7 @@ function startGame(){
     // Bets
     ibet=0;
     for(let i=0;i<2;i++){
-      let bet=parseInt(prompt(`Player ${i+1} place your bet:`,'0'))||0;
+      let bet=parseInt(await promptInput(`Player ${i+1} place your bet:`,'0'))||0;
       if(bet>players[i].gold) bet=players[i].gold;
       players[i].gold-=bet;
       ibet+=bet;
@@ -163,14 +209,14 @@ function startGame(){
     // show tiles and winds
     for(let i=0;i<2;i++){
       log(`Player ${i+1} tiles:`);
-      tiles[i].forEach(t=>log(` ${t.name} of ${t.suit}`));
+      tiles[i].forEach(t=>log(`<span class="tile">${t.name} of ${t.suit}</span>`));
     }
     for(let i=0;i<2;i++){
       const w= windsCheck(tiles[i]);
       if(w){
         log(`Player ${i+1} has the ${['East','South','North','West'][w-1]} Wind`);
         if((w===1||w===2)&&players[i].position===0 || (w===3||w===4)&&players[i].position===1){
-          if(confirm(`Player ${i+1}, switch seats?`)){
+          if(await promptYesNo(`Player ${i+1}, switch seats?`)){
             const other=i===0?1:0;
             [players[i].position,players[other].position]=[players[other].position,players[i].position];
             if(dwin===i+1) dwin=other+1; else if(dwin===other+1) dwin=i+1;
@@ -210,10 +256,10 @@ function startGame(){
       if(fsp[0] && fsp[1]){
         log('Both players have an FSP! Rolling dice...');
         const fd = dice();
-        if(fd%2===0){ log('Player 1 goes first.'); if(jellyBean(0)){win=1;players[0].rwin++;fspwin=1;} else if(jellyBean(1)){win=2;players[1].rwin++;fspwin=1;} }
-        else { log('Player 2 goes first.'); if(jellyBean(1)){win=2;players[1].rwin++;fspwin=1;} else if(jellyBean(0)){win=1;players[0].rwin++;fspwin=1;} }
-      } else if(fsp[0]){ log('Player 1 has an FSP.'); if(jellyBean(0)){win=1;players[0].rwin++;fspwin=1;} }
-      else if(fsp[1]){ log('Player 2 has an FSP.'); if(jellyBean(1)){win=2;players[1].rwin++;fspwin=1;} }
+        if(fd%2===0){ log('Player 1 goes first.'); if(await jellyBean(0)){win=1;players[0].rwin++;fspwin=1;} else if(await jellyBean(1)){win=2;players[1].rwin++;fspwin=1;} }
+        else { log('Player 2 goes first.'); if(await jellyBean(1)){win=2;players[1].rwin++;fspwin=1;} else if(await jellyBean(0)){win=1;players[0].rwin++;fspwin=1;} }
+      } else if(fsp[0]){ log('Player 1 has an FSP.'); if(await jellyBean(0)){win=1;players[0].rwin++;fspwin=1;} }
+      else if(fsp[1]){ log('Player 2 has an FSP.'); if(await jellyBean(1)){win=2;players[1].rwin++;fspwin=1;} }
       else { log('Nobody has an FSP.'); }
     }
 
@@ -223,6 +269,7 @@ function startGame(){
       if(dwin===1){ players[0].gold+=ibet; log('All bets to Player 1'); }
       else if(dwin===2){ players[1].gold+=ibet; log('All bets to Player 2'); }
       else { log('Draw. Bets remain on table.'); }
+      await promptMessage('Next round...');
     }
   }
 
@@ -239,6 +286,7 @@ function startGame(){
   if(fspwin){ players[winner].gold+=3200; log('Rhodium Jewel!'); }
   if(players[loser].rwin===0 && fspwin && round<=3){ players[winner].gold*=2; log('Relic of Perfection!!!'); }
   log(`Winner's gold: ${players[winner].gold}`);
+  startBtn.disabled = false;
 }
 
 startBtn.addEventListener('click', startGame);

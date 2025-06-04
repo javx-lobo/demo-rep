@@ -9,9 +9,16 @@
 </head>
 <body>
 <div id="app">
-<h1>Deal or No Deal</h1>
-<div id="log" class="log"></div>
-<button id="startBtn">Start Game</button>
+  <h1>Deal or No Deal</h1>
+  <div id="log" class="log"></div>
+  <div id="prompt" class="prompt hidden">
+    <span id="promptText"></span>
+    <input id="promptInput" type="text" />
+    <button id="promptOk" class="btn"><i class="fa fa-check"></i></button>
+    <button id="promptYes" class="btn hidden">Yes</button>
+    <button id="promptNo" class="btn hidden">No</button>
+  </div>
+  <button id="startBtn" class="btn"><i class="fa fa-play"></i> Start Game</button>
 </div>
 <script src="game.js"></script>
 </body>
